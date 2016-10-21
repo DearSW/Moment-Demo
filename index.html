@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>World</title>
-    <link rel="stylesheet" href="http://odfgqiz57.bkt.clouddn.com/css/normalize.css">
+    <link rel="stylesheet" href="//odfgqiz57.bkt.clouddn.com/css/normalize.css">
     <style>
         .map {
             position: relative;
@@ -37,7 +37,7 @@
         }
 
         .map-wrap {
-            background: #0a0a0a url(http://odfgqiz57.bkt.clouddn.com/image/bg.png);
+            background: #0a0a0a url(//odfgqiz57.bkt.clouddn.com/image/bg.png);
             padding: 1px;
             border-radius: 3px;
             position: relative;
@@ -45,7 +45,7 @@
 
         .map-inset {
             padding-bottom: 50%;
-            background: url(http://odfgqiz57.bkt.clouddn.com/image/world.png) 50% 50%;
+            background: url(//odfgqiz57.bkt.clouddn.com/image/world.png) 50% 50%;
             background-size: cover;
             position: relative;
             border-radius: 2px;
@@ -167,7 +167,7 @@
             }
         };
 
-        $.getJSON('http://odfgqiz57.bkt.clouddn.com/JSON/world.json').then(function (data) {
+        $.getJSON('//odfgqiz57.bkt.clouddn.com/JSON/world.json').then(function (data) {
             for (var name in data.zones) {
                 centers.push(new Center(data.zones[name]));
             }
