@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>World</title>
+    <link rel="stylesheet" href="http://odfgqiz57.bkt.clouddn.com/css/normalize.css">
+    <style>
+        .map {
+            position: relative;
+            margin: 0 auto;
+            padding: 40px;
+            max-width: 1024px;
+        }
+
+        .map-label {
+            line-height: 60px;
+            font-size: 24px;
+            margin: 0;
+            color: #4CAF50;
+            font-family: monospace;
+        }
+
+        .map-label span {
+            display: block;
+        }
+        .map-label .map-label-name {
+            float: left;
+            width: 50%;
+            padding-right: 10px;
+            text-align: right;
+        }
+
+        .map-label .map-label-time {
+            margin-left: 50%;
+            padding-left: 10px;
+            text-align: left;
+        }
+
+        .map-wrap {
+            background: #0a0a0a url(http://odfgqiz57.bkt.clouddn.com/image/bg.png);
+            padding: 1px;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .map-inset {
+            padding-bottom: 50%;
+            background: url(http://odfgqiz57.bkt.clouddn.com/image/world.png) 50% 50%;
+            background-size: cover;
+            position: relative;
+            border-radius: 2px;
+        }
+
+        .map-inset .map-axis-x {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-left: 1px solid #F44336;
+            width: 0;
+            -webkit-transition: left 50ms ease-out;
+            transition: left 50ms ease-out;
+        }
+
+        .map-inset .map-axis-y {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 1px solid #F44336;
+            height: 0;
+            -webkit-transition: top 50ms ease-out;
+            transition: top 50ms ease-out;
+        }
+
+        .map-inset span {
+            width: 6px;
+            height: 6px;
+            margin: -3px 0 0 -3px;
+            background: #fff;
+            position: absolute;
+            border-radius: 3px;
+            border: 1px solid #4e7cad;
+        }
+    </style>
+</head>
+<body>
+
+    <div>
+        <div class="map">
+            <h3 class="map-label">
+                <span class="map-label-name">Antarctica/Casey</span>
+                <span class="map-label-time">04:10 pm AWST</span>
+            </h3>
+            <div class="map-wrap">
+                <div class="map-inset">
+                    <div class="map-axis-x"></div>
+                    <div class="map-axis-y"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.15.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.6/moment-timezone-with-data.min.js"></script>
+    <!--<script src="./moment.min.js"></script>-->
+    <!--<script src="./moment-timezone-with-data.min.js"></script>-->
+    <script>
+    (function(){
+
+        moment.locale("en"); // 设置语言(全局)
+
+        var $map = $('.map-inset'),
+                $labelName = $('.map-label-name'),
+                $labelTime = $('.map-label-time'),
+                $axisX = $('.map-axis-x'),
+                $axisY = $('.map-axis-y'),
+                width = $map.outerWidth(),
+                height = $map.outerHeight(),
+                lastCenter,
+                centers = [];
+
+        $(window).resize(function () {
+            width = $map.outerWidth();
+            height = $map.outerHeight();
+        }).resize();
+
+        function changeCenter (center) {
+            if (center === lastCenter) {
+                return;
+            }
+            if (lastCenter) {
+                lastCenter.deactivate();
+            }
+            center.activate();
+            lastCenter = center;
+        }
+
+        function Center (data) {
+            this.name = data.name;
+            this.x = (180 + data.long) / 360;
+            this.y = (90 - data.lat) / 180;
+            this.dom = $('<span>').appendTo($map).css({
+                left: this.x * 100 + '%',
+                top: this.y * 100 + '%'
+            });
+            if (this.name === 'America/Los_Angeles') {
+                changeCenter(this);
+            }
+        }
+
+        Center.prototype = {
+            distSqr : function (x, y) {
+                var dx = this.x - x,
+                    dy = this.y - y;
+                return dx * dx + dy * dy;
+            },
+            activate : function () {
+                var m = moment().tz(this.name); // moment().tz(String) is used to change the timezone on an existing moment.
+                $labelName.text(this.name);
+                $labelTime.text(m.format("HH:mm A ") + m.zoneAbbr());
+                $axisX.css('left', this.x * 100 + '%');
+                $axisY.css('top', this.y * 100 + '%');
+            },
+            deactivate : function ()  {
+                this.dom.removeClass('active');
+            }
+        };
+
+        $.getJSON('http://odfgqiz57.bkt.clouddn.com/JSON/world.json').then(function (data) {
+            for (var name in data.zones) {
+                centers.push(new Center(data.zones[name]));
+            }
+        });
+
+        $('.map-inset').mousemove(function (e) {
+            var offset = $(this).offset(),
+                    x = e.pageX - offset.left,
+                    y = e.pageY - offset.top,
+                    px = x / width,
+                    py = y / height,
+                    dist,
+                    closestDist = 100,
+                    closestCenter,
+                    i;
+
+            for (i = 0; i < centers.length; i++) {
+                dist = centers[i].distSqr(px, py);
+                if (dist < closestDist) {
+                    closestCenter = centers[i];
+                    closestDist = dist;
+                }
+            }
+
+            if (closestCenter) {
+                changeCenter(closestCenter);
+            }
+        });
+
+    })();
+</script>
+</body>
+</html>
